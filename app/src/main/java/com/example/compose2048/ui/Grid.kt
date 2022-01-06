@@ -24,11 +24,12 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.compose2048.extension.*
 import com.example.compose2048.models.GridTileMovement
+import com.example.compose2048.theme.AppTheme
 import kotlin.math.min
 
 private val GRID_TILE_RADIUS = 4.dp
-const val GRID_SIZE = 4
 
 @Composable
 fun Grid(
@@ -40,15 +41,16 @@ fun Grid(
         val width = with(LocalDensity.current) { maxWidth.toPx() }
         val height = with(LocalDensity.current) { maxHeight.toPx() }
         val tileMarginPx = with(LocalDensity.current) { 4.dp.toPx() }
-        val tileSizePx = ((min(width, height) - tileMarginPx * (GRID_SIZE - 1)) / GRID_SIZE).coerceAtLeast(0f)
+        val tileSizePx =
+            ((min(width, height) - tileMarginPx * (GRID_SIZE - ONE)) / GRID_SIZE).coerceAtLeast(0f)
         val tileSizeDp = Dp(tileSizePx / LocalDensity.current.density)
         val tileOffsetPx = tileSizePx + tileMarginPx
-        val emptyTileColor = getEmptyTileColor(isSystemInDarkTheme())
+        val emptyTileColor = getEmptyTileColor()
         Box(
             modifier = Modifier.drawBehind {
                 // Draw the background empty tiles.
-                for (row in 0 until GRID_SIZE) {
-                    for (col in 0 until GRID_SIZE) {
+                for (row in ZERO until GRID_SIZE) {
+                    for (col in ZERO until GRID_SIZE) {
                         drawRoundRect(
                             color = emptyTileColor,
                             topLeft = Offset(col * tileOffsetPx, row * tileOffsetPx),
@@ -61,9 +63,15 @@ fun Grid(
         ) {
             for (gridTileMovement in gridTileMovements) {
                 val (fromGridTile, toGridTile) = gridTileMovement
-                val fromScale = if (fromGridTile == null) 0f else 1f
-                val toOffset = Offset(toGridTile.cell.col * tileOffsetPx, toGridTile.cell.row * tileOffsetPx)
-                val fromOffset = fromGridTile?.let { Offset(it.cell.col * tileOffsetPx, it.cell.row * tileOffsetPx) } ?: toOffset
+                val fromScale = if (fromGridTile == null) ZERO_FLOAT else ONE_FLOAT
+                val toOffset =
+                    Offset(toGridTile.cell.col * tileOffsetPx, toGridTile.cell.row * tileOffsetPx)
+                val fromOffset = fromGridTile?.let {
+                    Offset(
+                        it.cell.col * tileOffsetPx,
+                        it.cell.row * tileOffsetPx
+                    )
+                } ?: toOffset
 
                 key(toGridTile.tile.id) {
                     GridTileText(
@@ -93,46 +101,55 @@ private fun GridTileText(
     val animatedOffset = remember { Animatable(fromOffset, Offset.VectorConverter) }
     Text(
         text = "$num",
-        modifier = Modifier.size(size)
+        modifier = Modifier
+            .size(size)
             .graphicsLayer(
                 scaleX = animatedScale.value,
                 scaleY = animatedScale.value,
                 translationX = animatedOffset.value.x,
                 translationY = animatedOffset.value.y,
-            ).background(
-                color = getTileColor(num, isSystemInDarkTheme()),
+            )
+            .background(
+                color = getTileColor(num),
                 shape = RoundedCornerShape(GRID_TILE_RADIUS),
-            ).wrapContentSize(),
+            )
+            .wrapContentSize(),
         color = Color.White,
         fontSize = 18.sp,
     )
     LaunchedEffect(moveCount) {
-        animatedScale.snapTo(if (moveCount == 0) 1f else fromScale)
-        animatedScale.animateTo(1f, tween(durationMillis = 200, delayMillis = 50))
-        animatedOffset.animateTo(toOffset, tween(durationMillis = 100))
+        animatedScale.snapTo(if (moveCount == ZERO) ONE_FLOAT else fromScale)
+        animatedScale.animateTo(
+            ONE_FLOAT, tween(
+                durationMillis = DURATION_MILLIS_200, delayMillis = DEFAULT_DELAY_MILLIS
+            )
+        )
+        animatedOffset.animateTo(toOffset, tween(durationMillis = DURATION_MILLIS_100))
     }
 }
 
-private fun getTileColor(num: Int, isDarkTheme: Boolean): Color {
+@Composable
+private fun getTileColor(num: Int): Color {
     return when (num) {
-        2 -> Color(if (isDarkTheme) 0xff4e6cef else 0xff50c0e9)
-        4 -> Color(if (isDarkTheme) 0xff3f51b5 else 0xff1da9da)
-        8 -> Color(if (isDarkTheme) 0xff8e24aa else 0xffcb97e5)
-        16 -> Color(if (isDarkTheme) 0xff673ab7 else 0xffb368d9)
-        32 -> Color(if (isDarkTheme) 0xffc00c23 else 0xffff5f5f)
-        64 -> Color(if (isDarkTheme) 0xffa80716 else 0xffe92727)
-        128 -> Color(if (isDarkTheme) 0xff0a7e07 else 0xff92c500)
-        256 -> Color(if (isDarkTheme) 0xff056f00 else 0xff7caf00)
-        512 -> Color(if (isDarkTheme) 0xffe37c00 else 0xffffc641)
-        1024 -> Color(if (isDarkTheme) 0xffd66c00 else 0xffffa713)
-        2048 -> Color(if (isDarkTheme) 0xffcf5100 else 0xffff8a00)
-        4096 -> Color(if (isDarkTheme) 0xff80020a else 0xffcc0000)
-        8192 -> Color(if (isDarkTheme) 0xff303f9f else 0xff0099cc)
-        16384 -> Color(if (isDarkTheme) 0xff512da8 else 0xff9933cc)
+        TWO -> AppTheme.color.color2
+        FOUR -> AppTheme.color.color4
+        EIGHT -> AppTheme.color.color8
+        SIXTEEN -> AppTheme.color.color16
+        THIRTY_TWO -> AppTheme.color.color32
+        SIXTY_FOUR -> AppTheme.color.color64
+        ONE_HUNDRED_TWENTY_EIGHT -> AppTheme.color.color128
+        TWO_HUNDRED_FIFTY_SIX -> AppTheme.color.color256
+        FIVE_HUNDRED_AND_TWELVE -> AppTheme.color.color512
+        THOUSAND_AND_TWENTY_FOUR -> AppTheme.color.color1024
+        TWO_THOUSAND_FORTY_EIGHT -> AppTheme.color.color2048
+        FOUR_THOUSAND_NINETY_SIX -> AppTheme.color.color4096
+        EIGHT_THOUSAND_AND_NINETY_TWO -> AppTheme.color.color8192
+        SIXTEEN_THOUSAND_THREE_HUNDRED_AND_EIGHTY_FOUR -> AppTheme.color.color16384
         else -> Color.Black
     }
 }
 
-private fun getEmptyTileColor(isDarkTheme: Boolean): Color {
-    return Color(if (isDarkTheme) 0xff444444 else 0xffdddddd)
+@Composable
+private fun getEmptyTileColor(): Color {
+    return AppTheme.color.colorEmptyTitle
 }

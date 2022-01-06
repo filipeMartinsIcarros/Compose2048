@@ -18,9 +18,10 @@ import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.constraintlayout.compose.ChainStyle
 import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.constraintlayout.compose.ConstraintSet
+import com.example.compose2048.extension.ONE_FLOAT
+import com.example.compose2048.extension.atan3
+import com.example.compose2048.extension.buildConstraints
 import com.example.compose2048.models.Direction
 import com.example.compose2048.models.GridTileMovement
 
@@ -39,7 +40,7 @@ fun MainUi(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Teste") },
+                title = { Text("Jogo 2048") },
                 contentColor = Color.White,
                 backgroundColor = MaterialTheme.colors.primaryVariant,
                 actions = {
@@ -81,7 +82,7 @@ fun MainUi(
             ) {
                 Grid(
                     modifier = Modifier
-                        .aspectRatio(1f)
+                        .aspectRatio(ONE_FLOAT)
                         .padding(16.dp)
                         .layoutId("gameGrid"),
                     gridTileMovements = gridTileMovements,
@@ -94,7 +95,7 @@ fun MainUi(
                     fontWeight = FontWeight.Light,
                 )
                 Text(
-                    text = "Score",
+                    text = "Pontos",
                     modifier = Modifier.layoutId("currentScoreLabel"),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Light,
@@ -106,7 +107,7 @@ fun MainUi(
                     fontWeight = FontWeight.Light,
                 )
                 Text(
-                    text = "Best",
+                    text = "Melhor Pontuação",
                     modifier = Modifier.layoutId("bestScoreLabel"),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Light,
@@ -116,15 +117,15 @@ fun MainUi(
     }
     if (isGameOver) {
         Dialog(
-            title = "Game over",
-            message = "Start a new game?",
+            title = "Fim de Jogo",
+            message = "Começar um novo jogo?",
             onConfirmListener = { onNewGameRequested.invoke() },
             onDismissListener = {},
         )
     } else if (shouldShowNewGameDialog) {
         Dialog(
-            title = "Start a new game?",
-            message = "Starting a new game will erase your current game",
+            title = "Começar um novo jogo?",
+            message = "Começar um novo jogo apagará seu jogo atual",
             onConfirmListener = {
                 onNewGameRequested.invoke()
                 shouldShowNewGameDialog = false
@@ -134,70 +135,4 @@ fun MainUi(
             },
         )
     }
-}
-
-
-private fun buildConstraints(isPortrait: Boolean): ConstraintSet {
-    return ConstraintSet {
-        val gameGrid = createRefFor("gameGrid")
-        val currentScoreText = createRefFor("currentScoreText")
-        val currentScoreLabel = createRefFor("currentScoreLabel")
-        val bestScoreText = createRefFor("bestScoreText")
-        val bestScoreLabel = createRefFor("bestScoreLabel")
-
-        if (isPortrait) {
-            constrain(gameGrid) {
-                start.linkTo(parent.start)
-                top.linkTo(parent.top)
-                end.linkTo(parent.end)
-            }
-            constrain(currentScoreText) {
-                start.linkTo(gameGrid.start, 16.dp)
-                top.linkTo(gameGrid.bottom)
-            }
-            constrain(currentScoreLabel) {
-                start.linkTo(currentScoreText.start)
-                top.linkTo(currentScoreText.bottom)
-            }
-            constrain(bestScoreText) {
-                end.linkTo(gameGrid.end, 16.dp)
-                top.linkTo(gameGrid.bottom)
-            }
-            constrain(bestScoreLabel) {
-                end.linkTo(bestScoreText.end)
-                top.linkTo(bestScoreText.bottom)
-            }
-        } else {
-            constrain(gameGrid) {
-                start.linkTo(parent.start)
-                top.linkTo(parent.top)
-                bottom.linkTo(parent.bottom)
-            }
-            constrain(currentScoreText) {
-                start.linkTo(currentScoreLabel.start)
-                bottom.linkTo(currentScoreLabel.top)
-            }
-            constrain(currentScoreLabel) {
-                start.linkTo(bestScoreText.start)
-                bottom.linkTo(bestScoreText.top)
-            }
-            constrain(bestScoreText) {
-                start.linkTo(bestScoreLabel.start)
-                bottom.linkTo(bestScoreLabel.top)
-            }
-            constrain(bestScoreLabel) {
-                start.linkTo(gameGrid.end)
-                bottom.linkTo(gameGrid.bottom, 16.dp)
-            }
-            createHorizontalChain(gameGrid, bestScoreLabel, chainStyle = ChainStyle.Packed)
-        }
-    }
-}
-
-private fun atan3(x: Float, y: Float): Float {
-    var degrees = Math.toDegrees(kotlin.math.atan2(y, x).toDouble()).toFloat()
-    if (degrees < 0) {
-        degrees += 360
-    }
-    return degrees
 }

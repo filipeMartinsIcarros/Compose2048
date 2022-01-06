@@ -6,13 +6,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlin.math.max
 import androidx.lifecycle.ViewModel
+import com.example.compose2048.extension.*
 import com.example.compose2048.models.*
 import com.example.compose2048.repository.MainRepository
 import com.google.android.material.math.MathUtils
 
-const val GRID_SIZE = 4
-private const val NUM_INITIAL_TILES = 2
-private val EMPTY_GRID = (0 until GRID_SIZE).map { arrayOfNulls<Tile?>(GRID_SIZE).toList() }
+const val GRID_SIZE = FOUR
+private const val NUM_INITIAL_TILES = TWO
+private val EMPTY_GRID = (ZERO until GRID_SIZE).map { arrayOfNulls<Tile?>(GRID_SIZE).toList() }
 
 class MainViewModel(private val mainRepository: MainRepository) : ViewModel() {
 
@@ -33,7 +34,6 @@ class MainViewModel(private val mainRepository: MainRepository) : ViewModel() {
         if (savedGrid == null) {
             startNewGame()
         } else {
-            // Restore a previously saved game.
             grid = savedGrid.map { tiles -> tiles.map { if (it == null) null else Tile(it) } }
             gridTileMovements = savedGrid.flatMapIndexed { row, tiles ->
                 tiles.mapIndexed { col, it ->
@@ -47,12 +47,12 @@ class MainViewModel(private val mainRepository: MainRepository) : ViewModel() {
     }
 
     fun startNewGame() {
-        gridTileMovements = (0 until NUM_INITIAL_TILES).mapNotNull { createRandomAddedTile(EMPTY_GRID) }
+        gridTileMovements = (ZERO until NUM_INITIAL_TILES).mapNotNull { createRandomAddedTile(EMPTY_GRID) }
         val addedGridTiles = gridTileMovements.map { it.toGridTile }
         grid = EMPTY_GRID.map { row, col, _ -> addedGridTiles.find { row == it.cell.row && col == it.cell.col }?.tile }
-        currentScore = 0
+        currentScore = ZERO
         isGameOver = false
-        moveCount = 0
+        moveCount = ZERO
         mainRepository.saveState(grid, currentScore, bestScore)
     }
 
@@ -63,12 +63,10 @@ class MainViewModel(private val mainRepository: MainRepository) : ViewModel() {
             return
         }
 
-        // Increment the score.
         val scoreIncrement = updatedGridTileMovements.filter { it.fromGridTile == null }.sumBy { it.toGridTile.tile.num }
         currentScore += scoreIncrement
         bestScore = max(bestScore, currentScore)
 
-        // Attempt to add a new tile to the grid.
         updatedGridTileMovements = updatedGridTileMovements.toMutableList()
         val addedTileMovement = createRandomAddedTile(updatedGrid)
         if (addedTileMovement != null) {
@@ -78,7 +76,7 @@ class MainViewModel(private val mainRepository: MainRepository) : ViewModel() {
         }
 
         this.grid = updatedGrid
-        this.gridTileMovements = updatedGridTileMovements.sortedWith { a, _ -> if (a.fromGridTile == null) 1 else -1 }
+        this.gridTileMovements = updatedGridTileMovements.sortedWith { a, _ -> if (a.fromGridTile == null) ONE else -ONE }
         this.isGameOver = checkIsGameOver(grid)
         this.moveCount++
         this.mainRepository.saveState(this.grid, this.currentScore, this.bestScore)
@@ -90,15 +88,15 @@ private fun createRandomAddedTile(grid: List<List<Tile?>>): GridTileMovement? {
         tiles.mapIndexed { col, it -> if (it == null) Cell(row, col) else null }.filterNotNull()
     }
     val emptyCell = emptyCells.getOrNull(emptyCells.indices.random()) ?: return null
-    return GridTileMovement.add(GridTile(emptyCell, if (Math.random() < 0.9f) Tile(2) else Tile(4)))
+    return GridTileMovement.add(GridTile(emptyCell, if (Math.random() < 0.9f) Tile(TWO) else Tile(FOUR)))
 }
 
 private fun makeMove(grid: List<List<Tile?>>, direction: Direction): Pair<List<List<Tile?>>, List<GridTileMovement>> {
     val numRotations = when (direction) {
-        Direction.WEST -> 0
-        Direction.SOUTH -> 1
-        Direction.EAST -> 2
-        Direction.NORTH -> 3
+        Direction.WEST -> ZERO
+        Direction.SOUTH -> ONE
+        Direction.EAST -> TWO
+        Direction.NORTH -> THREE
     }
 
     var updatedGrid = grid.rotate(numRotations)
@@ -139,7 +137,7 @@ private fun makeMove(grid: List<List<Tile?>>, direction: Direction): Pair<List<L
                     val targetCell = getRotatedCellAt(currentRowIndex, lastSeenTileIndex, numRotations)
                     gridTileMovements.add(GridTileMovement.shift(currentGridTile, GridTile(targetCell, currentTile)))
 
-                    val addedTile = currentTile * 2
+                    val addedTile = currentTile * TWO
                     gridTileMovements.add(GridTileMovement.add(GridTile(targetCell, addedTile)))
 
                     tiles[lastSeenTileIndex] = addedTile
@@ -181,10 +179,10 @@ private fun <T> List<List<T>>.rotate(@IntRange(from = 0, to = 3) numRotations: I
 
 private fun getRotatedCellAt(row: Int, col: Int, @IntRange(from = 0, to = 3) numRotations: Int): Cell {
     return when (numRotations) {
-        0 -> Cell(row, col)
-        1 -> Cell(GRID_SIZE - 1 - col, row)
-        2 -> Cell(GRID_SIZE - 1 - row, GRID_SIZE - 1 - col)
-        3 -> Cell(col, GRID_SIZE - 1 - row)
+        ZERO -> Cell(row, col)
+        ONE -> Cell(GRID_SIZE - ONE - col, row)
+        TWO -> Cell(GRID_SIZE - ONE - row, GRID_SIZE - ONE - col)
+        THREE -> Cell(col, GRID_SIZE - ONE - row)
         else -> throw IllegalArgumentException("numRotations must be an integer in [0,3]")
     }
 }

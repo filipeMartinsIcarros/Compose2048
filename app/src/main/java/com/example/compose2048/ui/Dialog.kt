@@ -16,7 +16,7 @@ fun Dialog(
         title = { Text(text = title) },
         text = { Text(text = message) },
         confirmButton = { TextButton(onClick = { onConfirmListener.invoke() }) { Text("OK") } },
-        dismissButton = { TextButton(onClick = { onDismissListener.invoke() }) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = { onDismissListener.invoke() }) { Text("Cancelar") } },
         onDismissRequest = { onDismissListener.invoke() },
     )
 }
